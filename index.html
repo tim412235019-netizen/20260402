@@ -39,9 +39,23 @@
 
         .info-legend { 
             position: fixed; bottom: 25px; left: 15px; width: 380px; z-index: 9999; 
-            background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; 
+            background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            transition: all 0.3s ease; /* 增加過場動畫 */
         }
-        .legend-header { background: #0f172a; padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        /* 當面板處於收合狀態時的專屬樣式 */
+        .info-legend.collapsed {
+            width: max-content; 
+            border-radius: 30px;
+        }
+        .legend-header { 
+            background: #0f172a; padding: 15px 20px; color: white; display: flex; 
+            justify-content: space-between; align-items: center; cursor: pointer;
+            border-radius: 15px 15px 0 0; transition: all 0.3s ease;
+        }
+        .info-legend.collapsed .legend-header {
+            border-radius: 30px; /* 收合時變成膠囊狀 */
+            padding: 10px 20px;
+        }
         
         #main-content { padding: 20px; max-height: 60vh; overflow-y: auto; }
         .edu-section { background: #f1f5f9; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
@@ -63,11 +77,25 @@
         .low-gradient { background: linear-gradient(to right, #deebf7, #3182bd); }
         .bar-labels { display: flex; justify-content: space-between; font-size: 11px; margin-top: 5px; font-weight: bold; color: #64748b; }
 
+        /* 🚨 手機版優化區塊 (RWD) 🚨 */
         @media (max-width: 768px) {
-            .controls { left: 10px; top: 10px; padding: 10px; width: 180px; }
-            .info-legend { width: 90vw; left: 5vw; bottom: 10px; }
+            /* 左上控制面板微調 */
+            .controls { left: 10px; top: 10px; padding: 10px; width: 160px; }
+            .controls select, .controls button { padding: 6px; font-size: 11px; }
+            
+            /* 右上行政區微調，避免重疊 */
+            .village-control { min-width: 120px; padding: 10px; }
+            .village-control select { padding: 4px; font-size: 12px; }
+            
+            /* 說明板微調：收合時不佔寬度，展開時佔據螢幕 */
+            .info-legend { width: 90vw; left: 5vw; bottom: 15px; }
+            .info-legend.collapsed { width: max-content; left: 10px; bottom: 15px; max-width: 80vw; }
+            .legend-header h2 { font-size: 14px !important; margin-right: 15px !important; }
             .highlight-val { font-size: 24px; }
-            .colorbar-legend { bottom: auto; top: 10px; right: 10px; width: 150px; }
+            
+            /* 修正色階條：放回右下方，避開選單 */
+            .colorbar-legend { bottom: 75px; top: auto; right: 10px; width: 140px; padding: 8px; }
+            .colorbar-title { font-size: 11px; margin-bottom: 5px; }
         }
     </style>
 </head>
