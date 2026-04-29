@@ -11,197 +11,195 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f8fafc; font-family: "Microsoft JhengHei", sans-serif; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
         .controls { 
-            position: absolute; top: 10px; left: 50px; z-index: 1000; 
-            background: rgba(255, 255, 255, 0.95); padding: 12px; 
-            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-            font-family: "Microsoft JhengHei", sans-serif;
-            width: 220px;
+            position: absolute; top: 15px; left: 60px; z-index: 1000; 
+            background: white; padding: 15px; border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); width: 250px; 
+        }
+        .controls select { 
+            padding: 8px; margin-bottom: 10px; width: 100%; border-radius: 6px; 
+            border: 1px solid #ddd; font-size: 13px; cursor: pointer; 
         }
         .controls button { 
-            cursor: pointer; padding: 6px 0; margin-bottom: 8px; 
-            width: 48%; font-weight: bold; border: 1px solid #ccc;
-            background: white; border-radius: 4px;
+            cursor: pointer; padding: 8px 0; margin-bottom: 10px; 
+            width: 48%; font-weight: bold; border: 1px solid #cbd5e0; 
+            background: #fff; border-radius: 6px; 
         }
         .controls button:hover { background: #e9ecef; }
-        .controls select {
-            padding: 6px; margin-bottom: 8px; width: 100%;
-            cursor: pointer; border-radius: 4px; border: 1px solid #ccc;
-            font-family: "Microsoft JhengHei", sans-serif; font-size: 13px;
-        }
 
-        .info-legend {
-            padding: 12px; background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 8px;
-            max-width: 260px; font-family: "Microsoft JhengHei", sans-serif;
+        .village-control { 
+            background: #fff; padding: 15px; border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2); border: 1px solid #e2e8f0; min-width: 150px; 
         }
-        .toggle-btn { 
-            background: #f8f9fa; border: 1px solid #ccc; border-radius: 3px; 
-            cursor: pointer; padding: 2px 6px; font-size: 12px; float: right; 
+        .village-control b { color: #1e293b; display: block; margin-bottom: 8px; border-left: 4px solid #2563eb; padding-left: 8px; }
+        .village-control select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #cbd5e0; font-size: 13px; margin-bottom: 5px; cursor: pointer; }
+
+        .info-legend { 
+            position: fixed; bottom: 25px; left: 15px; width: 380px; z-index: 9999; 
+            background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; 
         }
-        #legend-content { margin-top: 5px; display: block; line-height: 1.6; }
+        .legend-header { background: #0f172a; padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         
-        .colorbar-legend {
-            padding: 10px; background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 10px rgba(0,0,0,0.3); border-radius: 5px;
-            width: 180px; font-family: "Microsoft JhengHei", sans-serif;
-        }
-        .colorbar-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; text-align: center; }
-        .gradient-bar { height: 15px; width: 100%; border-radius: 2px; border: 1px solid #999; }
+        #main-content { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        .edu-section { background: #f1f5f9; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .edu-header { padding: 10px 15px; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; cursor: pointer; }
+        .edu-body { padding: 12px 15px; font-size: 13px; color: #475569; line-height: 1.6; }
+        .edu-title { display: block; font-weight: 900; color: #2563eb; margin-top: 5px; }
+
+        .highlight-card { background: #fff; border: 2px solid #f1f5f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
+        .highlight-val { font-size: 32px; font-weight: 900; color: #0f172a; display: block; }
+        .highlight-label { font-size: 13px; color: #64748b; }
+        
+        .top5-item { padding: 9px 12px; font-size: 13px; color: #334155; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; cursor: pointer; border-radius: 6px; }
+        .top5-item:hover { background: #eff6ff; color: #2563eb; }
+        
+        .colorbar-legend { padding: 12px; background: white; border-radius: 8px; width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: absolute; bottom: 25px; right: 15px; z-index: 1000; }
+        .colorbar-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #1e293b; }
+        .gradient-bar { height: 15px; width: 100%; border-radius: 4px; }
         .high-gradient { background: linear-gradient(to right, #fee0d2, #de2d26); }
         .low-gradient { background: linear-gradient(to right, #deebf7, #3182bd); }
-        .bar-labels { display: flex; justify-content: space-between; font-size: 11px; margin-top: 3px; font-weight: bold; }
-        .village-control {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            font-family: "Microsoft JhengHei", sans-serif;
-            min-width: 150px;
-            }
-        .village-control select {
-            width: 100%;
-            padding: 5px;
-            margin-top: 5px;
-        cursor: pointer;
+        .bar-labels { display: flex; justify-content: space-between; font-size: 11px; margin-top: 5px; font-weight: bold; color: #64748b; }
+
+        @media (max-width: 768px) {
+            .controls { left: 10px; top: 10px; padding: 10px; width: 180px; }
+            .info-legend { width: 90vw; left: 5vw; bottom: 10px; }
+            .highlight-val { font-size: 24px; }
+            .colorbar-legend { bottom: auto; top: 10px; right: 10px; width: 150px; }
         }
-        
-#map { 
-    height: 100vh; 
-    height: 100dvh; 
-    width: 100%; 
-    z-index: 1; 
-}
-
-@media (max-width: 768px) {
-    .controls { 
-        left: 10px; top: 10px; width: 150px; padding: 8px; font-size: 11px; 
-    }
-    
-    .info-legend, .colorbar-legend { 
-        max-width: 130px; 
-        transform: scale(0.85); 
-        transform-origin: bottom left; 
-    }
-    .colorbar-legend { 
-        transform-origin: bottom right; 
-    }
-    .info-legend p { display: none; }
-
-    .village-control {
-        min-width: 120px;
-        padding: 8px;
-        transform: scale(0.85);
-        transform-origin: top right;
-        margin-top: 10px;
-        margin-right: 10px;
-    }
-    .village-control div {
-        font-size: 11px !important; 
-    }
-    .village-control select {
-        padding: 4px;
-        font-size: 11px; 
-    }
-}
     </style>
 </head>
 <body>
 
     <div class="controls">
-    <div style="display: flex; justify-content: space-between;">
-        <button onclick="getLocation()">📍 定位</button>
-        <button onclick="goHome()">🏠 返回</button>
-    </div>
-    <hr style="border: 0; border-top: 1px solid #ddd; margin: 5px 0 10px 0;">
-    
-    <div style="font-weight:bold; font-size:13px; margin-bottom:5px;">🗺️ 底圖選擇</div>
-    <select id="basemap-select" onchange="changeBaseLayer(this.value)">
-        <option value="esri" selected>🛰️ 衛星影像</option>
-        <option value="osm">🛣️ 街道地圖</option>
-    </select>
+        <div style="display: flex; justify-content: space-between;">
+            <button onclick="getLocation()">📍 定位位置</button>
+            <button onclick="goHome()">🏠 返回</button>
+        </div>
+        
+        <select id="basemap-select" onchange="changeBaseLayer(this.value)">
+            <option value="esri" selected>🛰️ 衛星影像</option>
+            <option value="osm">🛣️ 街道地圖</option>
+        </select>
 
-    <div style="font-weight:bold; font-size:13px; margin-bottom:5px;">⚙️ 情境與時間</div>
-    <select id="time-select" onchange="updateClimateLayer()">
-        <option value="Short" selected> 短期 (2021-2040)</option>
-        <option value="Mid"> 中期 (2041-2060)</option>
-        <option value="Long"> 長期 (2081-2100)</option>
-    </select>
+        <select id="time-select" onchange="updateClimateLayer()">
+            <option value="Short" selected>短期 (2021-2040)</option>
+            <option value="Mid">中期 (2041-2060)</option>
+            <option value="Long">長期 (2081-2100)</option>
+        </select>
 
-    <select id="ssp-select" onchange="updateClimateLayer()">
-        <option value="126" selected>SSP126</option>
-        <option value="245">SSP245</option>
-        <option value="370">SSP370</option>
-        <option value="585">SSP585</option>
-    </select>
-    
-    <select id="type-select" onchange="updateClimateLayer()">
-        <option value="high" selected>🌡️ 高溫日數</option>
-        <option value="low">❄️ 低溫日數</option>
-    </select>
+        <select id="ssp-select" onchange="updateClimateLayer()">
+            <option value="126" selected>情境：SSP1-2.6</option>
+            <option value="245">情境：SSP2-4.5</option>
+            <option value="370">情境：SSP3-7.0</option>
+            <option value="585">情境：SSP5-8.5</option>
+        </select>
+        
+        <select id="type-select" onchange="updateClimateLayer()">
+            <option value="high" selected>高溫日數 (≧35°C)</option>
+            <option value="low">低溫日數 (≦15°C)</option>
+        </select>
     </div>
+    
     <div id="map"></div>
+
+    <div class="info-legend">
+        <div class="legend-header" onclick="toggleMain()">
+            <h2 style="margin:0; font-size:16px;">氣候潛勢溫度分析說明板</h2>
+            <span id="main-icon">收合</span>
+        </div>
+        <div id="main-content">
+            <div class="edu-section">
+                <div class="edu-header" onclick="toggleEdu()">
+                    <span>💡 分析指標：解讀指南</span>
+                    <span id="edu-icon">▼</span>
+                </div>
+                <div class="edu-body" id="edu-body" style="display: none;">
+                    <span class="edu-title">● 高溫日數</span>
+                    指該區域日最高溫大於35°C的平均天數。
+                    <span class="edu-title">● 低溫日數</span>
+                    指該區域日最低溫小於15°C的平均天數。
+                    <span class="edu-title">● 空間分布指標</span>
+                    依據 TaiESM1 模型推估各地區在不同氣候情境下（SSP1-2.6 至 SSP5-8.5）受溫度影響之潛勢分佈。
+                </div>
+            </div>
+
+            <div class="highlight-card">
+                <span class="highlight-label" id="current-layer-name">全場景模擬最大值</span>
+                <span class="highlight-val" id="current-max-val">--</span>
+                <span class="highlight-label">模擬最大值 (天)</span>
+            </div>
+            
+            <div style="margin-bottom:10px;">
+                <b style="font-size:14px;">🚩 風險排行榜 (里)</b>
+            </div>
+            <div id="top5-list">資料計算中...</div>
+            
+            <div style="font-size:11px; color:#94a3b8; margin-top:15px; text-align:center; border-top:1px solid #f1f5f9; padding-top:10px;">
+                嘉義市韌性防災計畫 ｜ 中正大學學研團隊
+            </div>
+        </div>
+    </div>
+
+    <div class="colorbar-legend">
+        <div id="high-bar-box" style="display:block;">
+            <div class="colorbar-title">🌡️ 高溫預估天數色階</div>
+            <div class="gradient-bar high-gradient"></div>
+            <div class="bar-labels">
+                <span id="h-min-val">--</span><span>(天)</span><span id="h-max-val">--</span>
+            </div>
+        </div>
+        <div id="low-bar-box" style="display:none;">
+            <div class="colorbar-title">❄️ 低溫預估天數色階</div>
+            <div class="gradient-bar low-gradient"></div>
+            <div class="bar-labels">
+                <span id="l-min-val">--</span><span>(天)</span><span id="l-max-val">--</span>
+            </div>
+        </div>
+    </div>
 
     <script>
         var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
         var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
 
-        var groups = {
-            Short: { high: {}, low: {} },
-            Mid:   { high: {}, low: {} },
-            Long:  { high: {}, low: {} }
-        };
+        var map = L.map('map', { center: [23.48, 120.45], zoom: 13, layers: [esri], zoomControl: false });
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
+        var climateGroup = L.layerGroup().addTo(map);   
+        var highlightLayer = L.layerGroup().addTo(map); 
+
+        var groups = { Short: { high: {}, low: {} }, Mid: { high: {}, low: {} }, Long: { high: {}, low: {} } };
         ["Short", "Mid", "Long"].forEach(p => {
             ["high", "low"].forEach(t => {
-                ["126", "245", "370", "585"].forEach(s => {
-                    groups[p][t][s] = L.layerGroup();
-                });
+                ["126", "245", "370", "585"].forEach(s => { groups[p][t][s] = L.layerGroup(); });
             });
         });
 
-        var map = L.map('map', { 
-            center: [23.48, 120.45], 
-            zoom: 13, 
-            layers: [esri] 
-        });
-
-        map.createPane('climatePane');
-        map.getPane('climatePane').style.zIndex = 650; 
-        map.getPane('climatePane').style.pointerEvents = 'none';
-
         var villageLayer; 
-        var highlightLayer = L.layerGroup().addTo(map);
+        var currentVillageStats = {};
+        var currentGlobalMax = 0;
 
         function changeBaseLayer(type) {
-        if (type === 'osm') {
-        map.addLayer(osm);
-        map.removeLayer(esri);
-        } else {
-        map.addLayer(esri);
-        map.removeLayer(osm);
-        }
+            if (type === 'osm') { map.addLayer(osm); map.removeLayer(esri); } 
+            else { map.addLayer(esri); map.removeLayer(osm); }
         }
 
-        fetch('chiayi_boundary.geojson')
-        .then(res => res.json())
-        .then(data => {
+        fetch('chiayi_boundary.geojson').then(res => res.json()).then(data => {
             villageLayer = data; 
-
             L.geoJSON(data, {
-                style: { color: "#333", weight: 1, fill: false, opacity: 0.2, pointerEvents: 'none' }
+                style: { color: "#333", weight: 1.5, fill: false, opacity: 0.6 },
+                interactive: false 
             }).addTo(map);
+            calculateCurrentStats();
         });
 
         var villageControl = L.control({position: 'topright'});
         villageControl.onAdd = function() {
-            
             var div = L.DomUtil.create('div', 'village-control'); 
             div.innerHTML = `
-                <div style="font-weight:bold; font-size:13px; margin-bottom:5px;">🔍 行政區快搜</div>
+                <b>🔍 行政區快搜</b>
                 <select id="district-select" onchange="updateVillageDropdown(this.value)">
                     <option value="">-- 請選擇區 --</option>
                     <option value="東區">東區</option>
@@ -219,67 +217,40 @@
         function updateVillageDropdown(districtName) {
             var vSelect = document.getElementById('village-search-select');
             vSelect.innerHTML = '<option value="">-- 請選擇里別 --</option>';
-            
             if (!districtName) {
                 vSelect.disabled = true;
-                vSelect.innerHTML = '<option value="">-- 請先選擇區 --</option>';
                 highlightLayer.clearLayers(); 
                 return;
             }
-
             var filteredVillages = villageLayer.features.filter(function(f) {
                 return f.properties.TOWNNAME === districtName || f.properties.DISTRICT === districtName;
             });
-
             var names = filteredVillages.map(f => f.properties.VILLNAME).sort();
-
             if (names.length > 0) {
                 vSelect.disabled = false;
                 names.forEach(name => {
                     var opt = document.createElement('option');
-                    opt.value = name;
-                    opt.innerHTML = name;
+                    opt.value = name; opt.innerHTML = name;
                     vSelect.appendChild(opt);
                 });
             }
         }
 
-        function highlightVillage(villageName, isZoom) {
-            highlightLayer.clearLayers();
-
-            L.geoJSON(villageLayer, {
-                filter: function(f) { return f.properties.VILLNAME === villageName; },
-                style: { 
-                    color: "#FFFFFF", 
-                    weight: 12,       
-                    fill: true, 
-                    fillOpacity: 0.1, 
-                    pointerEvents: 'none' 
-                }
-            }).addTo(highlightLayer);
-
-            var target = L.geoJSON(villageLayer, {
-                filter: function(f) { return f.properties.VILLNAME === villageName; },
-                style: { 
-                    color: "#00FF00", 
-                    weight: 8,       
-                    fill: false, 
-                    dashArray: '10, 10',
-                    pointerEvents: 'none' 
-                }
-            }).addTo(highlightLayer);
-
-            if (isZoom && target.getBounds().isValid()) {
-                map.fitBounds(target.getBounds(), { padding: [20, 20] }); 
-            }
-        }
-
         function zoomToVillage(name) {
-            if (!name) {
-                highlightLayer.clearLayers();
-                return;
+            if (!name) { highlightLayer.clearLayers(); return; }
+            highlightLayer.clearLayers();
+            var target = L.geoJSON(villageLayer, {
+                filter: function(f) { return f.properties.VILLNAME === name; },
+                style: { color: "#FFFF00", weight: 6, fill: true, fillOpacity: 0.2, interactive: false }
+            }).addTo(highlightLayer);
+            
+            if (target.getBounds().isValid()) {
+                map.fitBounds(target.getBounds(), { padding: [20, 20] }); 
+                document.getElementById('current-layer-name').innerText = name + " 里內最大預估";
+                var maxVal = currentVillageStats[name] || 0;
+                // 改為整數
+                document.getElementById('current-max-val').innerText = Math.round(maxVal);
             }
-            highlightVillage(name, true);
         }
 
         var colorScaleHigh = d3.scaleSequential(d3.interpolateReds);
@@ -287,59 +258,71 @@
 
         function processAndRender(data, fieldName, colorScale, group) {
             const values = data.features.map(f => f.properties[fieldName]).filter(v => v != null);
-            if (values.length > 0) {
-                colorScale.domain([Math.min(...values), Math.max(...values)]);
-            }
+            if (values.length > 0) colorScale.domain([Math.min(...values), Math.max(...values)]);
 
             L.geoJSON(data, {
-                pane: 'climatePane',
+                interactive: true, 
                 style: function (f) {
-                    return {
-                        fillColor: colorScale(f.properties[fieldName]),
-                        weight: 0.5, 
-                        opacity: 0.5, 
-                        color: 'white', 
-                        fillOpacity: 0.7
-                    };
+                    return { fillColor: colorScale(f.properties[fieldName]), weight: 0.5, opacity: 0.5, color: 'white', fillOpacity: 0.75 };
                 },
-                onEachFeature: function (f, l) {
-                    l.on('click', function(e) {
-                        var vName = f.properties.里名 || f.properties.VILLNAME; 
-        
-                        if (!vName && villageLayer) {
-                            var pt = turf.point([e.latlng.lng, e.latlng.lat]); 
-                            for (var i = 0; i < villageLayer.features.length; i++) {
-                                var poly = villageLayer.features[i];
-                                if (turf.booleanPointInPolygon(pt, poly)) {
-                                    vName = poly.properties.VILLNAME || poly.properties.里名;
-                                    break;
-                                }
+                onEachFeature: function(f, layer) {
+                    layer.on('click', function(e) {
+                        if (!villageLayer) return;
+                        var localVal = f.properties[fieldName] || 0;
+                        
+                        var pt = turf.point([e.latlng.lng, e.latlng.lat]);
+                        var clickedVName = null;
+                        var clickedVFeat = null;
+                        var distName = null;
+
+                        for (var i = 0; i < villageLayer.features.length; i++) {
+                            if (turf.booleanPointInPolygon(pt, villageLayer.features[i])) {
+                                clickedVFeat = villageLayer.features[i];
+                                clickedVName = clickedVFeat.properties.VILLNAME || clickedVFeat.properties.里名;
+                                distName = clickedVFeat.properties.TOWNNAME || clickedVFeat.properties.DISTRICT;
+                                break;
                             }
                         }
 
-                        if (vName) {
-                            highlightVillage(vName, false); 
-                    
-                            var matchedVillage = villageLayer.features.find(vf => vf.properties.VILLNAME === vName);
-                            if (matchedVillage) {
-                                var distName = matchedVillage.properties.TOWNNAME || matchedVillage.properties.DISTRICT;
-                                if (distName) {
-                                    var distSelect = document.getElementById('district-select');
-                                    
-                                    if(distSelect && distSelect.value !== distName) {
-                                        distSelect.value = distName;
-                                        updateVillageDropdown(distName);
-                                    }
-                                }
-                            }
-                            var vSelect = document.getElementById('village-search-select');
-                            if(vSelect) vSelect.value = vName;
-                        }
+                        if (clickedVName) {
+                            var vMaxVal = currentVillageStats[clickedVName] || 0;
 
-                        L.popup()
-                            .setLatLng(e.latlng) 
-                            .setContent(`<b>${vName || '邊界外點位'}</b><br>預估天數: ${f.properties[fieldName]} 天`)
-                            .openOn(map);
+                            highlightLayer.clearLayers();
+                            L.geoJSON(clickedVFeat, {
+                                style: { color: "#FFFF00", weight: 6, fillOpacity: 0.2, opacity: 1 },
+                                interactive: false
+                            }).addTo(highlightLayer);
+
+                            // 更新左下角面板 (改為整數)
+                            document.getElementById('current-layer-name').innerText = clickedVName + " 里內最大預估";
+                            document.getElementById('current-max-val').innerText = Math.round(vMaxVal);
+
+                            // 🚨 連動右上角選單 🚨
+                            var distSelect = document.getElementById('district-select');
+                            var villSelect = document.getElementById('village-search-select');
+                            
+                            if (distSelect && distName) {
+                                distSelect.value = distName;
+                                updateVillageDropdown(distName); 
+                            }
+                            if (villSelect && clickedVName) {
+                                villSelect.value = clickedVName;
+                            }
+
+                            // 顯示詳細 Popup (皆改為整數)
+                            L.popup()
+                                .setLatLng(e.latlng)
+                                .setContent(`<div style="font-size:14px; font-family:'Microsoft JhengHei'; line-height:1.5;">
+                                    <b style="font-size:16px;">${clickedVName}</b><br>
+                                    📍 此點位預估值：<span style="font-weight:bold;">${Math.round(localVal)}</span> 天<br>
+                                    🚩 里內最大值：<span style="color:red; font-weight:bold;">${Math.round(vMaxVal)}</span> 天
+                                </div>`)
+                                .openOn(map);
+                        } else {
+                            L.popup().setLatLng(e.latlng).setContent(`點位預估值：${Math.round(localVal)} 天`).openOn(map);
+                        }
+                        
+                        L.DomEvent.stopPropagation(e);
                     });
                 }
             }).addTo(group);
@@ -372,90 +355,98 @@
             }).catch(e => console.log(d.file + " 資料未就緒"));
         });
 
-        var legend = L.control({position: 'bottomleft'});
-        legend.onAdd = function () {
-            var div = L.DomUtil.create('div', 'info-legend');
-            div.innerHTML = `
-                <button class="toggle-btn" onclick="toggleLegend()">➖ 收合</button>
-                <h4>嘉義市氣候溫度情境說明</h4>
-                <div id="legend-content">
-                <b>模式：TaiESM1</b><br>
-                <b>短/中期情境:ssp126/ ssp245/ ssp370/ ssp585<br>
-                <b>長期情境:ssp370</b>
-                <br>嘉義市韌性防災計畫-中正大學學研團隊製。<br>
-                <hr>
-                <p>🔴 <b>高溫日數</b>：指該區域日最高溫大於35°C的平均天數。</p>
-                <p>🔵 <b>低溫日數</b>：指該區域日最低溫小於15°C的平均天數。</p>
-                <small>資料來源：TCCIP AR6 1km網格日資料</small><br>
-                <small><b>#分析結果僅供參考</b></small>
-        </div>`;
+        function calculateCurrentStats() {
+            var time = document.getElementById('time-select').value;
+            var ssp = document.getElementById('ssp-select').value;
+            var type = document.getElementById('type-select').value;
+            var targetGroup = groups[time][type][ssp];
+            
+            if (!targetGroup || !villageLayer) return;
+            var layers = targetGroup.getLayers();
+            if(layers.length === 0) { setTimeout(calculateCurrentStats, 300); return; }
 
-            L.DomEvent.disableClickPropagation(div);
-            return div;
-        };
-        legend.addTo(map);
+            var feats = layers[0].toGeoJSON().features;
+            currentVillageStats = {};
+            currentGlobalMax = 0;
 
-        var colorBar = L.control({position: 'bottomright'});
-        colorBar.onAdd = function () {
-            var div = L.DomUtil.create('div', 'colorbar-legend');
-            div.innerHTML = `
-                <div id="high-bar-box" style="display:block;">
-                    <div class="colorbar-title">🌡️ 高溫預估天數色階</div>
-                    <div class="gradient-bar high-gradient"></div>
-                    <div class="bar-labels">
-                        <span id="h-min-val">--</span><span>(天)</span><span id="h-max-val">--</span>
-                    </div>
-                </div>
-                <div id="low-bar-box" style="display:none;">
-                    <div class="colorbar-title">❄️ 低溫預估天數色階</div>
-                    <div class="gradient-bar low-gradient"></div>
-                    <div class="bar-labels">
-                        <span id="l-min-val">--</span><span>(天)</span><span id="l-max-val">--</span>
-                    </div>
-                </div>`;
-            return div;
-        };
-        colorBar.addTo(map);
+            var sortedClimateFeats = feats.slice().sort((a,b) => {
+                var va = a.properties.days || 0; var vb = b.properties.days || 0;
+                if(va > currentGlobalMax) currentGlobalMax = va;
+                if(vb > currentGlobalMax) currentGlobalMax = vb;
+                return vb - va;
+            });
+
+            villageLayer.features.forEach(vFeat => {
+                var vName = vFeat.properties.VILLNAME || vFeat.properties.里名;
+                var foundMax = 0;
+                
+                for(var i = 0; i < sortedClimateFeats.length; i++) {
+                    var cFeat = sortedClimateFeats[i];
+                    if (cFeat.properties.days == null) continue;
+                    try {
+                        if (turf.booleanIntersects(vFeat, cFeat)) {
+                            foundMax = cFeat.properties.days;
+                            break; 
+                        }
+                    } catch (e) {
+                        if (turf.booleanPointInPolygon(turf.centroid(cFeat), vFeat)) {
+                            foundMax = cFeat.properties.days; break;
+                        }
+                    }
+                }
+                currentVillageStats[vName] = foundMax;
+            });
+
+            document.getElementById('current-layer-name').innerText = "全場景模擬最大值";
+            // 改為整數
+            document.getElementById('current-max-val').innerText = Math.round(currentGlobalMax);
+
+            var statsArray = Object.entries(currentVillageStats)
+                .map(([name, max]) => ({name, max}))
+                .sort((a,b) => b.max - a.max);
+
+            var top5Html = "";
+            var displayRank = 1;
+            for (var i = 0; i < statsArray.length; i++) {
+                if (i > 0 && statsArray[i].max < statsArray[i-1].max) { displayRank = i + 1; }
+                if (displayRank > 5) break;
+                top5Html += `
+                    <div class="top5-item" onclick="zoomToVillage('${statsArray[i].name}')">
+                        <span>${displayRank}. ${statsArray[i].name}</span>
+                        <b>${Math.round(statsArray[i].max)} 天</b>
+                    </div>`; // 排行榜改為整數
+            }
+            document.getElementById('top5-list').innerHTML = top5Html;
+        }
 
         function updateClimateLayer() {
             var time = document.getElementById('time-select').value;
-    var sspSelect = document.getElementById('ssp-select');
-    var sspOptions = sspSelect.options; 
+            var sspSelect = document.getElementById('ssp-select');
+            var sspOptions = sspSelect.options; 
 
-    if (time === 'Long') {
-        for (var i = 0; i < sspOptions.length; i++) {
-            if (sspOptions[i].value !== '370') {
-                sspOptions[i].disabled = true;  
-                sspOptions[i].text = sspOptions[i].value + " (無資料)"; 
+            if (time === 'Long') {
+                for (var i = 0; i < sspOptions.length; i++) {
+                    if (sspOptions[i].value !== '370') {
+                        sspOptions[i].disabled = true;  
+                        sspOptions[i].text = sspOptions[i].value + " (無資料)"; 
+                    } else {
+                        sspOptions[i].disabled = false; sspOptions[i].selected = true; sspOptions[i].text = "SSP" + sspOptions[i].value;
+                    }
+                }
             } else {
-                sspOptions[i].disabled = false;
-                sspOptions[i].selected = true; 
-                sspOptions[i].text = "SSP" + sspOptions[i].value;
+                for (var i = 0; i < sspOptions.length; i++) { sspOptions[i].disabled = false; sspOptions[i].text = "SSP" + sspOptions[i].value; }
             }
-        }
-        } else {
-            for (var i = 0; i < sspOptions.length; i++) {
-            sspOptions[i].disabled = false;
-            sspOptions[i].text = "SSP" + sspOptions[i].value;
+
+            var ssp = sspSelect.value; 
+            var type = document.getElementById('type-select').value;
+
+            climateGroup.clearLayers();
+            var target = groups[time][type][ssp];
+            if (target) {
+                climateGroup.addLayer(target);
+                updateColorBar(target, type); 
+                calculateCurrentStats();
             }
-        }
-
-        var ssp  = sspSelect.value; 
-        var type = document.getElementById('type-select').value;
-
-        Object.keys(groups).forEach(p => {
-            Object.keys(groups[p]).forEach(t => {
-            Object.keys(groups[p][t]).forEach(s => {
-                map.removeLayer(groups[p][t][s]);
-            });
-            });
-            });
-
-        var target = groups[time][type][ssp];
-        if (target) {
-        map.addLayer(target);
-        updateColorBar(target, type); 
-        }
         }
 
         function updateColorBar(group, type) {
@@ -464,81 +455,60 @@
                 var feats = layers[0].toGeoJSON().features;
                 var vs = feats.map(f => f.properties.days).filter(v => v != null);
                 if (vs.length > 0) {
-                    var minV = Math.min(...vs).toFixed(1), maxV = Math.max(...vs).toFixed(1);
+                    var minV = Math.round(Math.min(...vs)), maxV = Math.round(Math.max(...vs)); // 色階改為整數
                     if (type === 'high') {
                         document.getElementById('high-bar-box').style.display = 'block';
                         document.getElementById('low-bar-box').style.display = 'none';
-                        document.getElementById('h-min-val').innerText = minV;
-                        document.getElementById('h-max-val').innerText = maxV;
+                        document.getElementById('h-min-val').innerText = minV; document.getElementById('h-max-val').innerText = maxV;
                     } else {
                         document.getElementById('low-bar-box').style.display = 'block';
                         document.getElementById('high-bar-box').style.display = 'none';
-                        document.getElementById('l-min-val').innerText = minV;
-                        document.getElementById('l-max-val').innerText = maxV;
+                        document.getElementById('l-min-val').innerText = minV; document.getElementById('l-max-val').innerText = maxV;
                     }
                 }
             }
         }
 
+        map.on('click', function(e) {
+            highlightLayer.clearLayers();
+            document.getElementById('current-layer-name').innerText = "全場景模擬最大值";
+            if(currentGlobalMax > 0) document.getElementById('current-max-val').innerText = Math.round(currentGlobalMax);
+        });
+
         function goHome() {
             map.flyTo([23.48, 120.45], 13);
-            
-            document.getElementById('ssp-select').value = "126";
-            document.getElementById('type-select').value = "high";
-            document.getElementById('basemap-select').value = "esri";
-            document.getElementById('time-select').value = "Short";
-            changeBaseLayer('esri');
-
-            var sspOptions = document.getElementById('ssp-select').options;
-            for (var i = 0; i < sspOptions.length; i++) {
-            sspOptions[i].disabled = false;
-            sspOptions[i].text = "SSP" + sspOptions[i].value;
-            }
-            updateClimateLayer();
-
+            highlightLayer.clearLayers();
+            document.getElementById('current-layer-name').innerText = "全場景模擬最大值";
+            if(currentGlobalMax > 0) document.getElementById('current-max-val').innerText = Math.round(currentGlobalMax);
             var dSelect = document.getElementById('district-select');
             if(dSelect) dSelect.value = "";
-            
             var vSelect = document.getElementById('village-search-select');
-            if(vSelect) {
-                vSelect.innerHTML = '<option value="">-- 請先選擇區 --</option>';
-                vSelect.disabled = true;
-            }
-
-            highlightLayer.clearLayers();
-            map.closePopup();
+            if(vSelect) { vSelect.innerHTML = '<option value="">-- 請先選擇區 --</option>'; vSelect.disabled = true; }
         }
 
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
-                    var lat = pos.coords.latitude;
-                    var lon = pos.coords.longitude;
+                    var lat = pos.coords.latitude; var lon = pos.coords.longitude;
                     L.marker([lat, lon]).addTo(map).bindPopup("您目前的 GPS 位置").openPopup();
                     map.setView([lat, lon], 15);
                 }, () => alert("無法取得位置，請檢查設備設定。"));
             }
         }
 
-        function toggleLegend() {
-            var c = document.getElementById("legend-content");
-            var b = document.querySelector(".toggle-btn");
-            if (c.style.display === "none") {
-                c.style.display = "block";
-                b.innerHTML = "➖ 收合";
-            } else {
-                c.style.display = "none";
-                b.innerHTML = "➕ 展開";
-            }
+        function toggleMain() {
+            var c = document.getElementById("main-content"); var icon = document.getElementById("main-icon");
+            if (c.style.display === "none") { c.style.display = "block"; icon.innerText = "收合"; } 
+            else { c.style.display = "none"; icon.innerText = "展開"; }
+        }
+
+        function toggleEdu() {
+            var c = document.getElementById("edu-body"); var icon = document.getElementById("edu-icon");
+            if (c.style.display === "none") { c.style.display = "block"; icon.innerText = "▲"; } 
+            else { c.style.display = "none"; icon.innerText = "▼"; }
         }
 
         setTimeout(updateClimateLayer, 800);
-
-        window.onload = function() {
-        if (window.innerWidth < 768) {
-            toggleLegend(); 
-          }
-        };
     </script>
 </body>
 </html>
