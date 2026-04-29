@@ -79,21 +79,22 @@
 
         /* 🚨 手機版優化區塊 (RWD) 🚨 */
         @media (max-width: 768px) {
-            /* 左上控制面板微調 */
-            .controls { left: 10px; top: 10px; padding: 10px; width: 160px; }
-            .controls select, .controls button { padding: 6px; font-size: 11px; }
+            /* 左上主控制面板微調 */
+            .controls { left: 5px; top: 5px; padding: 8px; width: 140px; }
+            .controls select, .controls button { padding: 4px; font-size: 11px; margin-bottom: 6px; }
             
-            /* 右上行政區微調，避免重疊 */
-            .village-control { min-width: 120px; padding: 10px; }
-            .village-control select { padding: 4px; font-size: 12px; }
+            /* 🚨 右上行政區微調，極致壓縮 🚨 */
+            .village-control { min-width: 70px; padding: 6px; border-radius: 8px; }
+            .village-control b { font-size: 11px; margin-bottom: 4px; padding-left: 5px; border-left-width: 3px; }
+            .village-control select { padding: 2px; font-size: 11px; margin-bottom: 4px; height: 24px; }
             
-            /* 說明板微調：收合時不佔寬度，展開時佔據螢幕 */
-            .info-legend { width: 90vw; left: 5vw; bottom: 15px; }
-            .info-legend.collapsed { width: max-content; left: 10px; bottom: 15px; max-width: 80vw; }
-            .legend-header h2 { font-size: 14px !important; margin-right: 15px !important; }
-            .highlight-val { font-size: 24px; }
+            /* 說明板微調 */
+            .info-legend { width: 80vw; left: 5vw; bottom: 13px; }
+            .info-legend.collapsed { width: max-content; left: 10px; bottom: 13px; max-width: 80vw; }
+            .legend-header h2 { font-size: 12px !important; margin-right: 13px !important; }
+            .highlight-val { font-size: 20px; }
             
-            /* 修正色階條：放回右下方，避開選單 */
+            /* 色階條微調 */
             .colorbar-legend { bottom: 75px; top: auto; right: 10px; width: 140px; padding: 8px; }
             .colorbar-title { font-size: 11px; margin-bottom: 5px; }
         }
